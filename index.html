@@ -1,0 +1,485 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>EUrouter Key Limit Checker</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+
+    :root {
+      --bg: #09090b;
+      --card-bg: rgba(24, 24, 27, 0.7);
+      --card-border: rgba(255, 255, 255, 0.08);
+      --input-bg: #121214;
+      --input-border: #27272a;
+      --text-main: #f4f4f5;
+      --text-muted: #a1a1aa;
+      --primary: #6366f1;
+      --primary-hover: #4f46e5;
+      --primary-glow: rgba(99, 102, 241, 0.5);
+      --success: #10b981;
+      --danger: #f87171;
+      --danger-bg: rgba(248, 113, 113, 0.1);
+      --info: #60a5fa;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Inter', system-ui, -apple-system, sans-serif;
+      background-color: var(--bg);
+      background-image: radial-gradient(circle at 50% 0%, #1f1f3a 0%, var(--bg) 70%);
+      background-attachment: fixed;
+      color: var(--text-main);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 1.5rem;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+    }
+
+    .card {
+      background: var(--card-bg);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border: 1px solid var(--card-border);
+      border-radius: 20px;
+      padding: 2.5rem;
+      width: 100%;
+      max-width: 1280px;
+      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+    }
+
+    h1 {
+      font-size: 1.5rem;
+      font-weight: 700;
+      letter-spacing: -0.03em;
+      margin-bottom: 0.35rem;
+      background: linear-gradient(to right, #fff, #a1a1aa);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .subtitle {
+      font-size: 0.875rem;
+      color: var(--text-muted);
+      margin-bottom: 2rem;
+      line-height: 1.5;
+    }
+
+    .input-row {
+      display: flex;
+      gap: 0.75rem;
+    }
+
+    input[type="text"] {
+      flex: 1;
+      padding: 0.75rem 1rem;
+      background: var(--input-bg);
+      border: 1px solid var(--input-border);
+      border-radius: 12px;
+      color: var(--text-main);
+      font-size: 0.95rem;
+      font-family: 'Inter', monospace;
+      outline: none;
+      transition: all 0.2s ease;
+      box-shadow: inset 0 2px 4px rgba(0,0,0,0.2);
+    }
+
+    input[type="text"]::placeholder { color: #52525b; font-family: 'Inter', sans-serif; }
+    input[type="text"]:focus { 
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.2), inset 0 2px 4px rgba(0,0,0,0.2);
+    }
+
+    button {
+      padding: 0.75rem 1.5rem;
+      background: linear-gradient(135deg, var(--primary), #8b5cf6);
+      border: none;
+      border-radius: 12px;
+      color: #fff;
+      font-size: 0.95rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      white-space: nowrap;
+      box-shadow: 0 4px 12px rgba(139, 92, 246, 0.3);
+    }
+
+    button:hover:not(:disabled) { 
+      transform: translateY(-1px);
+      box-shadow: 0 6px 16px rgba(139, 92, 246, 0.4);
+      filter: brightness(1.1);
+    }
+    button:active:not(:disabled) { transform: translateY(1px); }
+    button:disabled { opacity: 0.6; cursor: not-allowed; filter: grayscale(0.5); box-shadow: none; }
+
+    .error {
+      margin-top: 1.25rem;
+      padding: 0.85rem 1.25rem;
+      background: var(--danger-bg);
+      border: 1px solid rgba(248, 113, 113, 0.3);
+      border-radius: 12px;
+      color: var(--danger);
+      font-size: 0.875rem;
+      white-space: pre-wrap;
+      word-break: break-word;
+      line-height: 1.5;
+    }
+
+    .results { 
+      margin-top: 2rem; 
+      display: flex; 
+      flex-direction: column; 
+      gap: 1rem; 
+    }
+
+    .results-heading {
+      font-size: 0.8rem;
+      font-weight: 600;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+      margin-bottom: 0.25rem;
+    }
+
+    .count-badge {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      background: var(--input-border);
+      color: var(--text-main);
+      border-radius: 99px;
+      font-size: 0.75rem;
+      font-weight: 700;
+      padding: 0.15rem 0.6rem;
+      letter-spacing: 0;
+      text-transform: none;
+    }
+
+    .key-block {
+      background: var(--input-bg);
+      border: 1px solid var(--input-border);
+      border-radius: 16px;
+      padding: 1.25rem 1.5rem;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      display: flex;
+      align-items: center;
+      gap: 1.5rem;
+    }
+
+    .key-block:hover { border-color: #3f3f46; }
+
+    .key-block.highlight {
+      border-color: var(--primary);
+      background: rgba(99, 102, 241, 0.05);
+      box-shadow: 0 0 0 1px var(--primary), 0 10px 30px -10px rgba(99, 102, 241, 0.2);
+    }
+
+    .key-name {
+      font-weight: 600;
+      font-size: 1.1rem;
+      margin-bottom: 0.2rem;
+      color: #fff;
+      display: flex;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 0.4rem;
+    }
+
+    .key-label {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      font-family: 'Inter', monospace;
+    }
+
+    .stats-container {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 0.8rem;
+    }
+
+    .stats-row {
+      display: grid;
+      grid-template-columns: repeat(6, 1fr);
+      gap: 1rem;
+      align-items: center;
+    }
+
+    .stat-compact {
+      display: flex;
+      flex-direction: column;
+      gap: 0.2rem;
+    }
+
+    .stat-label {
+      font-size: 0.65rem;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      font-weight: 500;
+    }
+
+    .stat-value {
+      font-size: 1.1rem;
+      font-weight: 700;
+      color: var(--text-main);
+      letter-spacing: -0.02em;
+    }
+
+    .stat-value.unlimited { color: var(--success); }
+    .stat-value.depleted { color: var(--danger); }
+    .stat-value.ok { color: var(--info); }
+
+    .bar-wrap {
+      background: var(--input-border);
+      border-radius: 99px;
+      height: 4px;
+      width: 100%;
+      overflow: hidden;
+      box-shadow: inset 0 1px 2px rgba(0,0,0,0.2);
+    }
+
+    .bar-fill {
+      height: 100%;
+      border-radius: 99px;
+      background: linear-gradient(90deg, var(--primary), #a855f7);
+      transition: width 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .bar-fill.low { background: linear-gradient(90deg, #f43f5e, #fb923c); }
+
+    .meta-col {
+      flex: 0 0 140px;
+      display: flex;
+      flex-direction: column;
+      gap: 0.25rem;
+      font-size: 0.72rem;
+      color: var(--text-muted);
+      text-align: right;
+    }
+
+    .meta-col span.val {
+      color: #d4d4d8;
+      font-family: 'Inter', monospace;
+    }
+
+    @media (max-width: 1024px) {
+      .key-block { flex-direction: column; align-items: stretch; }
+      .meta-col { text-align: left; flex-direction: row; flex-wrap: wrap; gap: 1rem; }
+    }
+
+    .spinner {
+      display: inline-block;
+      width: 16px; height: 16px;
+      border: 2px solid rgba(255,255,255,0.3);
+      border-top-color: #fff;
+      border-radius: 50%;
+      animation: spin 0.6s linear infinite;
+      vertical-align: middle;
+      margin-right: 0.5rem;
+    }
+
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    .footer {
+      margin-top: 2rem;
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      text-align: center;
+      line-height: 1.5;
+    }
+
+    .footer a { 
+      color: var(--primary); 
+      text-decoration: none; 
+      font-weight: 500;
+      transition: color 0.15s;
+    }
+    .footer a:hover { color: #818cf8; text-decoration: underline; }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <h1>EUrouter Key Limit Checker</h1>
+    <p class="subtitle">Enter your API key to inspect usage limits and remaining credits.</p>
+
+    <div class="input-row">
+      <input
+        type="text"
+        id="apiKey"
+        placeholder="eur_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+        autocomplete="off"
+        spellcheck="false"
+      />
+      <button id="checkBtn" onclick="checkKey()">Check</button>
+    </div>
+
+    <div id="error" class="error" style="display:none;"></div>
+    <div id="results" class="results"></div>
+
+  </div>
+
+  <script>
+    const input = document.getElementById('apiKey');
+    const btn = document.getElementById('checkBtn');
+    const errorEl = document.getElementById('error');
+    const resultsEl = document.getElementById('results');
+
+    input.addEventListener('keydown', e => { if (e.key === 'Enter') checkKey(); });
+
+    function fmt(n) {
+      if (n == null) return '∞';
+      return Number(n).toLocaleString(undefined, { style: 'currency', currency: 'EUR' });
+    }
+
+    function pct(remaining, limit) {
+      if (limit == null || limit === 0) return null;
+      return Math.max(0, Math.min(100, (remaining / limit) * 100));
+    }
+
+    async function checkKey() {
+      const key = input.value.trim();
+      if (!key) { showError('Please enter an API key.'); return; }
+
+      // Clear the input field immediately for security
+      input.value = '';
+
+      errorEl.style.display = 'none';
+      resultsEl.innerHTML = '';
+      btn.disabled = true;
+      btn.innerHTML = '<span class="spinner"></span>Checking…';
+
+      const API_URL = 'https://api.eurouter.ai/api/v1/keys';
+      // On HTTPS (GitHub Pages) the key goes directly to the API.
+      // On HTTP (local dev) CORS blocks a direct fetch, so a proxy is used.
+      const useProxy = location.protocol !== 'https:';
+      const url = useProxy
+        ? 'https://corsproxy.io/?' + encodeURIComponent(API_URL)
+        : API_URL;
+
+      try {
+        const res = await fetch(url, {
+          headers: { 'Authorization': `Bearer ${key}` }
+        });
+
+        const json = await res.json();
+
+        if (!res.ok) {
+          showError(json?.error?.message || json?.message || `Error ${res.status}: ${res.statusText}`);
+          return;
+        }
+
+        const keys = json.data;
+        if (!keys || keys.length === 0) {
+          showError('No API keys found for this account.');
+          return;
+        }
+
+        resultsEl.innerHTML =
+          `<div class="results-heading">All keys on this account <span class="count-badge">${keys.length}</span></div>` +
+          keys.map(k => renderKey(k)).join('');
+      } catch (err) {
+        showError('Network error: ' + err.message);
+      } finally {
+        btn.disabled = false;
+        btn.textContent = 'Check';
+      }
+    }
+
+    function fmtDate(s) {
+      if (!s) return '—';
+      const d = new Date(s);
+      return isNaN(d) ? s : d.toLocaleString();
+    }
+
+    function renderKey(k) {
+      const unlimited = k.limit == null;
+      const p = pct(k.limit_remaining, k.limit);
+      const low = p !== null && p < 20;
+
+      const blockClass = 'key-block';
+
+      const remainingClass = unlimited ? 'unlimited' : (low ? 'depleted' : 'ok');
+
+      const barHtml = unlimited ? '' : `
+        <div class="bar-wrap">
+          <div class="bar-fill${low ? ' low' : ''}" style="width:${p.toFixed(1)}%"></div>
+        </div>`;
+
+      const statusBadge = k.disabled
+        ? `<div style="color:var(--text-muted);font-size:0.75rem;font-weight:600;text-transform:uppercase;letter-spacing:0.05em;margin-top:0.2rem;">Disabled</div>`
+        : `<div style="color:var(--success);font-size:0.75rem;font-weight:600;text-transform:uppercase;letter-spacing:0.05em;margin-top:0.2rem;">Active</div>`;
+
+      const resetText = (!k.limit_reset || k.limit_reset === 'null') ? 'Never' : k.limit_reset;
+
+      return `
+        <div class="${blockClass}">
+          <div class="key-info" style="flex: 0 0 220px;">
+            <div class="key-name">${esc(k.name)}</div>
+            ${statusBadge}
+            <div class="key-label" style="margin-top:0.4rem; font-size:0.75rem; color:var(--text-muted);">Limit Reset: ${resetText}</div>
+          </div>
+          
+          <div class="stats-container">
+            <div class="stats-row">
+              <div class="stat-compact">
+                <span class="stat-label">Limit</span>
+                <div>
+                  <span class="stat-value">${fmt(k.limit)}</span>
+                </div>
+              </div>
+              <div class="stat-compact">
+                <span class="stat-label">Remaining</span>
+                <span class="stat-value ${remainingClass}">${fmt(k.limit_remaining)}</span>
+              </div>
+              <div class="stat-compact">
+                <span class="stat-label">Total</span>
+                <span class="stat-value">${fmt(k.usage)}</span>
+              </div>
+              <div class="stat-compact">
+                <span class="stat-label">Day</span>
+                <span class="stat-value">${fmt(k.usage_daily)}</span>
+              </div>
+              <div class="stat-compact">
+                <span class="stat-label">Week</span>
+                <span class="stat-value">${fmt(k.usage_weekly)}</span>
+              </div>
+              <div class="stat-compact">
+                <span class="stat-label">Month</span>
+                <span class="stat-value">${fmt(k.usage_monthly)}</span>
+              </div>
+            </div>
+            ${barHtml}
+          </div>
+
+          <div class="meta-col">
+            <div>Hash: <span class="val">${esc(k.hash || '—')}</span></div>
+            <div>Created: <span class="val">${fmtDate(k.created_at)}</span></div>
+            <div>Used: <span class="val">${fmtDate(k.last_used)}</span></div>
+          </div>
+        </div>`;
+    }
+
+    function esc(s) {
+      return String(s ?? '')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;');
+    }
+
+    function showError(msg) {
+      errorEl.textContent = msg;
+      errorEl.style.display = 'block';
+    }
+  </script>
+</body>
+</html>
