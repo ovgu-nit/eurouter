@@ -384,7 +384,7 @@
         showError('Network error: ' + err.message);
       } finally {
         btn.disabled = false;
-        btn.textContent = 'Check';
+        btn.innerHTML = 'Check';
       }
     }
 
@@ -403,7 +403,7 @@
 
       const remainingClass = unlimited ? 'unlimited' : (low ? 'depleted' : 'ok');
 
-      const barHtml = unlimited ? '' : `
+      const barHtml = unlimited || p === null ? '' : `
         <div class="bar-wrap">
           <div class="bar-fill${low ? ' low' : ''}" style="width:${p.toFixed(1)}%"></div>
         </div>`;
@@ -439,15 +439,15 @@
                 <span class="stat-value">${fmt(k.usage)}</span>
               </div>
               <div class="stat-compact">
-                <span class="stat-label">Day</span>
+                <span class="stat-label">Today</span>
                 <span class="stat-value">${fmt(k.usage_daily)}</span>
               </div>
               <div class="stat-compact">
-                <span class="stat-label">Week</span>
+                <span class="stat-label">This week</span>
                 <span class="stat-value">${fmt(k.usage_weekly)}</span>
               </div>
               <div class="stat-compact">
-                <span class="stat-label">Month</span>
+                <span class="stat-label">This month</span>
                 <span class="stat-value">${fmt(k.usage_monthly)}</span>
               </div>
             </div>
