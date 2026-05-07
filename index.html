@@ -357,16 +357,10 @@
       btn.disabled = true;
       btn.innerHTML = '<span class="spinner"></span>Checking…';
 
-      const API_URL = 'https://api.eurouter.ai/api/v1/keys';
-      // On HTTPS (GitHub Pages) the key goes directly to the API.
-      // On HTTP (local dev) CORS blocks a direct fetch, so a proxy is used.
-      const useProxy = location.protocol !== 'https:';
-      const url = useProxy
-        ? 'https://corsproxy.io/?' + encodeURIComponent(API_URL)
-        : API_URL;
+      const API_URL = 'https://eurouter.t-hempel.workers.dev';
 
       try {
-        const res = await fetch(url, {
+        const res = await fetch(API_URL, {
           headers: { 'Authorization': `Bearer ${key}` }
         });
 
